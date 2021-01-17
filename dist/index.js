@@ -85,7 +85,6 @@ var Paintable = /** @class */ (function () {
         }
         catch (err) {
             // this.hide = true;
-            // this.hidePaintableNavigation = true;
         }
     };
     Paintable.prototype.setName = function (name) {
@@ -353,7 +352,6 @@ var Paintable = /** @class */ (function () {
                         }
                     }
                 }
-                // this.ctx?.clearRect(0, 0, this.canvas.width, this.canvas.height);
                 this.drawLine({
                     color: this.color,
                     width: this.lineWidth,

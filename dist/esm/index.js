@@ -53,7 +53,6 @@ export class Paintable {
         }
         catch (err) {
             // this.hide = true;
-            // this.hidePaintableNavigation = true;
         }
     }
     setName(name) {
@@ -298,7 +297,6 @@ export class Paintable {
                         }
                     }
                 }
-                // this.ctx?.clearRect(0, 0, this.canvas.width, this.canvas.height);
                 this.drawLine({
                     color: this.color,
                     width: this.lineWidth,
