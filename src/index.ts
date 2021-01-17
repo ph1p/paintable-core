@@ -74,7 +74,6 @@ export class Paintable {
       // this.$emit('toggle-paintable', this.isActive);
     } catch (err) {
       // this.hide = true;
-      // this.hidePaintableNavigation = true;
     }
   }
 

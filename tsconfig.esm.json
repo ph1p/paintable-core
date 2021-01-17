@@ -1,17 +1,11 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "target": "es5",
-    "module": "commonjs",
+    "target": "ES2016",
+    "module": "esnext",
     "moduleResolution": "node",
     "lib": ["es2016", "dom", "es5"],
-    "outDir": "./dist",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "declaration": true,
-    "declarationDir": "./typings"
+    "outDir": "./dist/esm"
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]

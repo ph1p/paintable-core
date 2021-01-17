@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "main": "dist/index.js",
-  "module": "dist/index.esm.js",
+  "module": "dist/esm/index.js",
   "scripts": {
     "typings": "tsc --declaration --emitDeclarationOnly",
-    "build": "tsc && tsc -t esnext --outFile index.esm.js",
+    "build": "tsc && tsc -p tsconfig.esm.json",
     "dev": "tsc --watch",
     "lint": "eslint './src/*.ts' --quiet --fix",
     "prepare": "npm run build"
@@ -18,10 +18,10 @@
     "printWidth": 120,
     "tabWidth": 2
   },
-  "types": "./typings/*.d.ts",
+  "types": "./dist/index.d.ts",
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Philip <me@ph1p.dev>",
+  "license": "MIT",
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^4.13.0",
     "@typescript-eslint/parser": "^4.13.0",
