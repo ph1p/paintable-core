@@ -23,15 +23,15 @@
     <button id="cancel">cancel</button>
     <button id="clear">clear</button>
   </body>
+  <!-- <script src="../dist/index.web.js"></script> -->
   <script type="module">
-    import { Paintable } from '../dist/esm/index.js';
+    // console.log(Paintable);
+    import { Paintable } from '../dist/index.esm.js';
     const canvas = document.querySelector('#canvas');
 
     const paintable = new Paintable(canvas);
     console.log(paintable);
-    document
-      .querySelector('#switch')
-      .addEventListener('click', () => paintable.setName('paintable2'));
+    document.querySelector('#switch').addEventListener('click', () => paintable.setName('paintable2'));
 
     document.querySelector('#undo').addEventListener('click', () => paintable.undo());
     document.querySelector('#redo').addEventListener('click', () => paintable.redo());
