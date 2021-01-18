@@ -8,10 +8,11 @@ npm install @paintable/core
 
 ### How to use
 
-```javascript
-import { Paintable } from '@paintable/core';
+You can find a full working example inside the `example` folder.
 
-const canvas = document.querySelector('#canvas');
+### Development
 
-const paintable = new Paintable(canvas);
+```bash
+npm run install
+npm run dev
 ```
