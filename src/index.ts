@@ -15,6 +15,9 @@ interface Store {
 
 export class Paintable {
   name = 'paintable';
+  color = '#000000';
+  lineWidth = 10;
+  threshold = 0;
 
   isMouse = true;
   currentX = 0;
@@ -22,31 +25,25 @@ export class Paintable {
 
   factor = 1;
 
-  color = '#000000';
   canvasIsEmpty = false;
   canvasId = Math.round(Math.random() * 1000);
 
-  isColorPickerOpen = false;
-  isLineWidthPickerOpen = false;
   isEraserActive = false;
   isActive = false;
-
-  pointCoords: Point[] = [];
-  redoList: RegistryEntry[] = [];
-  lineWidth = 10;
-  threshold = 0;
 
   ctx: CanvasRenderingContext2D | null = null;
   startedDrawing = false;
   thresholdReached = false;
 
-  registry: RegistryEntry[] = [];
+  private pointCoords: Point[] = [];
+  private redoList: RegistryEntry[] = [];
+  private registry: RegistryEntry[] = [];
 
   moveEvent: (e: any) => void;
   startEvent: (e: any) => void;
   endEvent: (e: any) => void;
 
-  constructor(private canvas: HTMLCanvasElement, initEvents = true) {
+  constructor(private readonly canvas: HTMLCanvasElement, initEvents = true) {
     this.moveEvent = this.drawMove.bind(this);
     this.startEvent = this.drawStart.bind(this);
     this.endEvent = this.drawEnd.bind(this);
@@ -55,7 +52,7 @@ export class Paintable {
   }
 
   // Init paintable component and set all variables
-  public reInit(events = true) {
+  public reInit(events = true): void {
     this.isActive = false;
     // reset registry and redo list
     this.registry = [];
@@ -77,28 +74,28 @@ export class Paintable {
     }
   }
 
-  public setName(name: string) {
+  public setName(name: string): void {
     this.name = name;
     this.reInit(false);
   }
 
-  public setColor(color: string) {
+  public setColor(color: string): void {
     this.color = color;
   }
 
-  public setActive(active: boolean) {
+  public setActive(active: boolean): void {
     this.isActive = active;
   }
 
-  public setThreshold(threshold: number) {
+  public setThreshold(threshold: number): void {
     this.threshold = threshold;
   }
 
-  public setLineWidth(lineWidth: number) {
+  public setLineWidth(lineWidth: number): void {
     this.lineWidth = lineWidth;
   }
 
-  public setLineWidthEraser(lineWidth: number) {
+  public setLineWidthEraser(lineWidth: number): void {
     this.lineWidth = lineWidth;
   }
 
@@ -126,21 +123,19 @@ export class Paintable {
   }
 
   // Get scaling factor of current device
-  get scalingFactor() {
+  get scalingFactor(): number {
     return window.devicePixelRatio || 1;
   }
 
   // Check if it is a touch device (https://ctrlq.org/code/19616-detect-touch-screen-javascript)
-  get isTouch() {
+  get isTouch(): boolean {
     return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
   }
 
   // Cancel current drawing and remove lines
-  public cancel() {
+  public cancel(): void {
     this.load();
     this.isActive = false;
-    this.isColorPickerOpen = false;
-    this.isLineWidthPickerOpen = false;
   }
 
   // register and unregister all events
@@ -165,7 +160,7 @@ export class Paintable {
   }
 
   // Undo drawed line
-  public undo() {
+  public undo(): void {
     if (this.registry.length > 0 && this.isActive) {
       this.redoList.push(this.registry[this.registry.length - 1]);
       this.registry.pop();
@@ -179,7 +174,7 @@ export class Paintable {
   }
 
   // Redo drawed line
-  public redo() {
+  public redo(): void {
     this.undoRedoCanvasState(this.redoList, this.registry);
   }
 
@@ -203,7 +198,7 @@ export class Paintable {
   }
 
   // Clear complete canvas
-  clear() {
+  clear(): void {
     this.ctx?.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
@@ -224,7 +219,7 @@ export class Paintable {
   }
 
   // Get canvas registry from storage
-  async load() {
+  async load(): Promise<void> {
     try {
       this.clear();
       const store = await this.getItem(this.name);
@@ -238,7 +233,7 @@ export class Paintable {
    * Check first, if canvas is empty.
    * If its not empty save it to the storage.
    */
-  public save() {
+  public save(): void {
     // reset to pencil
     this.isEraserActive = false;
 
@@ -254,7 +249,7 @@ export class Paintable {
         }),
       );
     }
-    this.registry = [];
+
     this.redoList = [];
 
     this.canvasIsEmpty = this.isCanvasBlank();
@@ -270,8 +265,6 @@ export class Paintable {
       this.redoList = [];
 
       this.drawEntriesFromRegistry();
-      this.isLineWidthPickerOpen = false;
-      this.isColorPickerOpen = false;
       this.startedDrawing = true;
 
       const x = this.isMouse ? e.clientX : e.targetTouches[0].clientX;
