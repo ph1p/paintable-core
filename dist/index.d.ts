@@ -1,34 +1,23 @@
-interface Point {
-    x: number;
-    y: number;
-}
-interface RegistryEntry {
-    color: string;
-    width: number;
-    points: Point[];
-}
 export declare class Paintable {
-    private canvas;
+    private readonly canvas;
     name: string;
+    color: string;
+    lineWidth: number;
+    threshold: number;
     isMouse: boolean;
     currentX: number;
     currentY: number;
     factor: number;
-    color: string;
     canvasIsEmpty: boolean;
     canvasId: number;
-    isColorPickerOpen: boolean;
-    isLineWidthPickerOpen: boolean;
     isEraserActive: boolean;
     isActive: boolean;
-    pointCoords: Point[];
-    redoList: RegistryEntry[];
-    lineWidth: number;
-    threshold: number;
     ctx: CanvasRenderingContext2D | null;
     startedDrawing: boolean;
     thresholdReached: boolean;
-    registry: RegistryEntry[];
+    private pointCoords;
+    private redoList;
+    private registry;
     moveEvent: (e: any) => void;
     startEvent: (e: any) => void;
     endEvent: (e: any) => void;
@@ -51,7 +40,8 @@ export declare class Paintable {
     redo(): void;
     private undoRedoCanvasState;
     private drawEntriesFromRegistry;
-    clear(): void;
+    private clearCanvas;
+    clear(completeClear?: boolean): void;
     private isCanvasBlank;
     load(): Promise<void>;
     /**
@@ -64,4 +54,3 @@ export declare class Paintable {
     private drawLine;
     private drawMove;
 }
-export {};

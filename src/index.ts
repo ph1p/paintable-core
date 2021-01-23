@@ -3,9 +3,10 @@ interface Point {
   y: number;
 }
 interface RegistryEntry {
-  color: string;
-  width: number;
-  points: Point[];
+  color?: string;
+  width?: number;
+  points?: Point[];
+  type: 'line' | 'clear';
 }
 interface Store {
   width?: number;
@@ -15,6 +16,9 @@ interface Store {
 
 export class Paintable {
   name = 'paintable';
+  color = '#000000';
+  lineWidth = 5;
+  threshold = 0;
 
   isMouse = true;
   currentX = 0;
@@ -22,31 +26,25 @@ export class Paintable {
 
   factor = 1;
 
-  color = '#000000';
   canvasIsEmpty = false;
   canvasId = Math.round(Math.random() * 1000);
 
-  isColorPickerOpen = false;
-  isLineWidthPickerOpen = false;
   isEraserActive = false;
   isActive = false;
-
-  pointCoords: Point[] = [];
-  redoList: RegistryEntry[] = [];
-  lineWidth = 10;
-  threshold = 0;
 
   ctx: CanvasRenderingContext2D | null = null;
   startedDrawing = false;
   thresholdReached = false;
 
-  registry: RegistryEntry[] = [];
+  private pointCoords: Point[] = [];
+  private redoList: RegistryEntry[] = [];
+  private registry: RegistryEntry[] = [];
 
   moveEvent: (e: any) => void;
   startEvent: (e: any) => void;
   endEvent: (e: any) => void;
 
-  constructor(private canvas: HTMLCanvasElement, initEvents = true) {
+  constructor(private readonly canvas: HTMLCanvasElement, initEvents = true) {
     this.moveEvent = this.drawMove.bind(this);
     this.startEvent = this.drawStart.bind(this);
     this.endEvent = this.drawEnd.bind(this);
@@ -55,7 +53,7 @@ export class Paintable {
   }
 
   // Init paintable component and set all variables
-  public reInit(events = true) {
+  public reInit(events = true): void {
     this.isActive = false;
     // reset registry and redo list
     this.registry = [];
@@ -77,28 +75,34 @@ export class Paintable {
     }
   }
 
-  public setName(name: string) {
+  public setName(name: string): void {
     this.name = name;
     this.reInit(false);
   }
 
-  public setColor(color: string) {
+  public setColor(color: string): void {
     this.color = color;
+    if (this.ctx) {
+      this.ctx.strokeStyle = color;
+    }
   }
 
-  public setActive(active: boolean) {
+  public setActive(active: boolean): void {
     this.isActive = active;
   }
 
-  public setThreshold(threshold: number) {
+  public setThreshold(threshold: number): void {
     this.threshold = threshold;
   }
 
-  public setLineWidth(lineWidth: number) {
+  public setLineWidth(lineWidth: number): void {
     this.lineWidth = lineWidth;
+    if (this.ctx) {
+      this.ctx.lineWidth = lineWidth;
+    }
   }
 
-  public setLineWidthEraser(lineWidth: number) {
+  public setLineWidthEraser(lineWidth: number): void {
     this.lineWidth = lineWidth;
   }
 
@@ -126,21 +130,19 @@ export class Paintable {
   }
 
   // Get scaling factor of current device
-  get scalingFactor() {
+  get scalingFactor(): number {
     return window.devicePixelRatio || 1;
   }
 
   // Check if it is a touch device (https://ctrlq.org/code/19616-detect-touch-screen-javascript)
-  get isTouch() {
+  get isTouch(): boolean {
     return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
   }
 
   // Cancel current drawing and remove lines
-  public cancel() {
+  public cancel(): void {
     this.load();
     this.isActive = false;
-    this.isColorPickerOpen = false;
-    this.isLineWidthPickerOpen = false;
   }
 
   // register and unregister all events
@@ -165,7 +167,7 @@ export class Paintable {
   }
 
   // Undo drawed line
-  public undo() {
+  public undo(): void {
     if (this.registry.length > 0 && this.isActive) {
       this.redoList.push(this.registry[this.registry.length - 1]);
       this.registry.pop();
@@ -179,7 +181,7 @@ export class Paintable {
   }
 
   // Redo drawed line
-  public redo() {
+  public redo(): void {
     this.undoRedoCanvasState(this.redoList, this.registry);
   }
 
@@ -198,13 +200,32 @@ export class Paintable {
   }
 
   private drawEntriesFromRegistry() {
-    this.clear();
-    this.registry.forEach((entry) => this.drawLine(entry));
+    this.clearCanvas();
+
+    this.registry.forEach((entry) => {
+      if (entry.type === 'line') {
+        this.drawLine(entry)
+      } else if (entry.type === 'clear') {
+        this.clearCanvas();
+      }
+    });
+  }
+
+  private clearCanvas() {
+    this.ctx?.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
   // Clear complete canvas
-  clear() {
-    this.ctx?.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  clear(completeClear = false): void {
+    this.clearCanvas();
+    if (!completeClear) {
+      this.registry.push({
+        type: 'clear'
+      });
+    } else {
+      this.registry = [];
+      this.redoList = [];
+    }
   }
 
   private isCanvasBlank() {
@@ -224,9 +245,9 @@ export class Paintable {
   }
 
   // Get canvas registry from storage
-  async load() {
+  async load(): Promise<void> {
     try {
-      this.clear();
+      this.clearCanvas();
       const store = await this.getItem(this.name);
       this.registry = store.elements || [];
       this.drawEntriesFromRegistry();
@@ -238,7 +259,7 @@ export class Paintable {
    * Check first, if canvas is empty.
    * If its not empty save it to the storage.
    */
-  public save() {
+  public save(): void {
     // reset to pencil
     this.isEraserActive = false;
 
@@ -254,7 +275,7 @@ export class Paintable {
         }),
       );
     }
-    this.registry = [];
+
     this.redoList = [];
 
     this.canvasIsEmpty = this.isCanvasBlank();
@@ -266,12 +287,11 @@ export class Paintable {
     this.thresholdReached = false;
 
     if (this.isActive) {
+      this.drawEntriesFromRegistry();
+
       // clear redo list
       this.redoList = [];
 
-      this.drawEntriesFromRegistry();
-      this.isLineWidthPickerOpen = false;
-      this.isColorPickerOpen = false;
       this.startedDrawing = true;
 
       const x = this.isMouse ? e.clientX : e.targetTouches[0].clientX;
@@ -303,6 +323,7 @@ export class Paintable {
       this.registry.push({
         width: this.lineWidth,
         color: this.color,
+        type: 'line',
         points,
       });
 
@@ -316,32 +337,34 @@ export class Paintable {
   }
 
   // Generate line from points array
-  private drawLine(entry: RegistryEntry) {
-    if (this.ctx) {
+  private drawLine(entry: Partial<RegistryEntry>) {
+
+    if (entry && this.ctx) {
       this.ctx.lineCap = 'round';
       this.ctx.lineWidth = entry.width || this.lineWidth;
       this.ctx.strokeStyle = entry.color || this.color;
     }
 
-    this.ctx?.beginPath();
+    if (entry.points && entry.points.length > 0) {
+      this.ctx?.beginPath();
+      this.ctx?.moveTo(entry.points[0].x, entry.points[0].y);
 
-    this.ctx?.moveTo(entry.points[0].x, entry.points[0].y);
+      for (let point = 0; point < entry.points.length - 1; point++) {
+        const p0 = point > 0 ? entry.points[point - 1] : entry.points[0];
+        const p1 = entry.points[point];
+        const p2 = entry.points[point + 1];
+        const p3 = point != (entry.points || []).length - 2 ? entry.points[point + 2] : p2;
 
-    for (let point = 0; point < entry.points.length - 1; point++) {
-      const p0 = point > 0 ? entry.points[point - 1] : entry.points[0];
-      const p1 = entry.points[point];
-      const p2 = entry.points[point + 1];
-      const p3 = point != entry.points.length - 2 ? entry.points[point + 2] : p2;
+        const cp1x = p1.x + (p2.x - p0.x) / 6;
+        const cp1y = p1.y + (p2.y - p0.y) / 6;
 
-      const cp1x = p1.x + (p2.x - p0.x) / 6;
-      const cp1y = p1.y + (p2.y - p0.y) / 6;
+        const cp2x = p2.x - (p3.x - p1.x) / 6;
+        const cp2y = p2.y - (p3.y - p1.y) / 6;
 
-      const cp2x = p2.x - (p3.x - p1.x) / 6;
-      const cp2y = p2.y - (p3.y - p1.y) / 6;
-
-      this.ctx?.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+        this.ctx?.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+      }
+      this.ctx?.stroke();
     }
-    this.ctx?.stroke();
   }
 
   // Draw line on move and add current position to an array
@@ -375,10 +398,17 @@ export class Paintable {
           }
         }
 
+
+        if (this.ctx) {
+          this.ctx.lineCap = 'round';
+          this.ctx.lineWidth = this.lineWidth;
+          this.ctx.strokeStyle = this.color;
+        }
+
         this.drawLine({
           color: this.color,
           width: this.lineWidth,
-          points: this.pointCoords,
+          points: this.pointCoords
         });
       }
     }
