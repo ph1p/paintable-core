@@ -53,7 +53,7 @@ if (process.env.NODE_ENV === 'development') {
             },
           },
         }),
-        terser(),
+        terser({ format: { comments: false } }),
       ],
     },
     {
@@ -65,7 +65,7 @@ if (process.env.NODE_ENV === 'development') {
         esModule: false,
         exports: 'named',
       },
-      plugins: [typescript(), terser()],
+      plugins: [typescript(), terser({ format: { comments: false } })],
     },
     {
       ...config,
@@ -73,7 +73,7 @@ if (process.env.NODE_ENV === 'development') {
         ...config.output,
         sourcemap: false,
       },
-      plugins: [...config.plugins, terser()],
+      plugins: [...config.plugins, terser({ format: { comments: false } })],
     },
   ];
 }

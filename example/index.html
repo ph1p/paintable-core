@@ -22,6 +22,8 @@
     <button id="load">load</button><br /><br />
     <button id="cancel">cancel</button>
     <button id="clear">clear</button>
+    <input id="lineWidth" type="range" min="5" max="70" value="5" />
+    <input id="color" type="color" value="#000000" />
   </body>
 
   <!-- <script src="https://cdn.jsdelivr.net/npm/@paintable/core"></script> -->
@@ -35,7 +37,13 @@
     const paintable = new Paintable(canvas);
 
     document.querySelector('#switch').addEventListener('click', () => paintable.setName('paintable2'));
-
+    paintable.setColor('rgba(0,0,0,0.5)')
+    document
+      .querySelector('#lineWidth')
+      .addEventListener('input', (e) => paintable.setLineWidth(e.currentTarget.value));
+    document
+      .querySelector('#color')
+      .addEventListener('input', (e) => paintable.setColor(e.currentTarget.value));
     document.querySelector('#undo').addEventListener('click', () => paintable.undo());
     document.querySelector('#redo').addEventListener('click', () => paintable.redo());
     document.querySelector('#save').addEventListener('click', () => paintable.save());

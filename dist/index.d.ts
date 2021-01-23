@@ -40,7 +40,8 @@ export declare class Paintable {
     redo(): void;
     private undoRedoCanvasState;
     private drawEntriesFromRegistry;
-    clear(): void;
+    private clearCanvas;
+    clear(completeClear?: boolean): void;
     private isCanvasBlank;
     load(): Promise<void>;
     /**

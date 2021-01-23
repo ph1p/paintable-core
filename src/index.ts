@@ -3,9 +3,10 @@ interface Point {
   y: number;
 }
 interface RegistryEntry {
-  color: string;
-  width: number;
-  points: Point[];
+  color?: string;
+  width?: number;
+  points?: Point[];
+  type: 'line' | 'clear';
 }
 interface Store {
   width?: number;
@@ -16,7 +17,7 @@ interface Store {
 export class Paintable {
   name = 'paintable';
   color = '#000000';
-  lineWidth = 10;
+  lineWidth = 5;
   threshold = 0;
 
   isMouse = true;
@@ -81,6 +82,9 @@ export class Paintable {
 
   public setColor(color: string): void {
     this.color = color;
+    if (this.ctx) {
+      this.ctx.strokeStyle = color;
+    }
   }
 
   public setActive(active: boolean): void {
@@ -93,6 +97,9 @@ export class Paintable {
 
   public setLineWidth(lineWidth: number): void {
     this.lineWidth = lineWidth;
+    if (this.ctx) {
+      this.ctx.lineWidth = lineWidth;
+    }
   }
 
   public setLineWidthEraser(lineWidth: number): void {
@@ -193,13 +200,32 @@ export class Paintable {
   }
 
   private drawEntriesFromRegistry() {
-    this.clear();
-    this.registry.forEach((entry) => this.drawLine(entry));
+    this.clearCanvas();
+
+    this.registry.forEach((entry) => {
+      if (entry.type === 'line') {
+        this.drawLine(entry)
+      } else if (entry.type === 'clear') {
+        this.clearCanvas();
+      }
+    });
+  }
+
+  private clearCanvas() {
+    this.ctx?.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
   // Clear complete canvas
-  clear(): void {
-    this.ctx?.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  clear(completeClear = false): void {
+    this.clearCanvas();
+    if (!completeClear) {
+      this.registry.push({
+        type: 'clear'
+      });
+    } else {
+      this.registry = [];
+      this.redoList = [];
+    }
   }
 
   private isCanvasBlank() {
@@ -221,7 +247,7 @@ export class Paintable {
   // Get canvas registry from storage
   async load(): Promise<void> {
     try {
-      this.clear();
+      this.clearCanvas();
       const store = await this.getItem(this.name);
       this.registry = store.elements || [];
       this.drawEntriesFromRegistry();
@@ -261,10 +287,11 @@ export class Paintable {
     this.thresholdReached = false;
 
     if (this.isActive) {
+      this.drawEntriesFromRegistry();
+
       // clear redo list
       this.redoList = [];
 
-      this.drawEntriesFromRegistry();
       this.startedDrawing = true;
 
       const x = this.isMouse ? e.clientX : e.targetTouches[0].clientX;
@@ -296,6 +323,7 @@ export class Paintable {
       this.registry.push({
         width: this.lineWidth,
         color: this.color,
+        type: 'line',
         points,
       });
 
@@ -309,32 +337,34 @@ export class Paintable {
   }
 
   // Generate line from points array
-  private drawLine(entry: RegistryEntry) {
-    if (this.ctx) {
+  private drawLine(entry: Partial<RegistryEntry>) {
+
+    if (entry && this.ctx) {
       this.ctx.lineCap = 'round';
       this.ctx.lineWidth = entry.width || this.lineWidth;
       this.ctx.strokeStyle = entry.color || this.color;
     }
 
-    this.ctx?.beginPath();
+    if (entry.points && entry.points.length > 0) {
+      this.ctx?.beginPath();
+      this.ctx?.moveTo(entry.points[0].x, entry.points[0].y);
 
-    this.ctx?.moveTo(entry.points[0].x, entry.points[0].y);
+      for (let point = 0; point < entry.points.length - 1; point++) {
+        const p0 = point > 0 ? entry.points[point - 1] : entry.points[0];
+        const p1 = entry.points[point];
+        const p2 = entry.points[point + 1];
+        const p3 = point != (entry.points || []).length - 2 ? entry.points[point + 2] : p2;
 
-    for (let point = 0; point < entry.points.length - 1; point++) {
-      const p0 = point > 0 ? entry.points[point - 1] : entry.points[0];
-      const p1 = entry.points[point];
-      const p2 = entry.points[point + 1];
-      const p3 = point != entry.points.length - 2 ? entry.points[point + 2] : p2;
+        const cp1x = p1.x + (p2.x - p0.x) / 6;
+        const cp1y = p1.y + (p2.y - p0.y) / 6;
 
-      const cp1x = p1.x + (p2.x - p0.x) / 6;
-      const cp1y = p1.y + (p2.y - p0.y) / 6;
+        const cp2x = p2.x - (p3.x - p1.x) / 6;
+        const cp2y = p2.y - (p3.y - p1.y) / 6;
 
-      const cp2x = p2.x - (p3.x - p1.x) / 6;
-      const cp2y = p2.y - (p3.y - p1.y) / 6;
-
-      this.ctx?.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+        this.ctx?.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+      }
+      this.ctx?.stroke();
     }
-    this.ctx?.stroke();
   }
 
   // Draw line on move and add current position to an array
@@ -368,10 +398,17 @@ export class Paintable {
           }
         }
 
+
+        if (this.ctx) {
+          this.ctx.lineCap = 'round';
+          this.ctx.lineWidth = this.lineWidth;
+          this.ctx.strokeStyle = this.color;
+        }
+
         this.drawLine({
           color: this.color,
           width: this.lineWidth,
-          points: this.pointCoords,
+          points: this.pointCoords
         });
       }
     }
