@@ -1,5 +1,8 @@
 // rollup.config.js
 import typescript from 'rollup-plugin-typescript2';
+import html from '@open-wc/rollup-plugin-html';
+import fs from 'fs';
+import path from 'path';
 import { terser } from 'rollup-plugin-terser';
 import serve from 'rollup-plugin-serve';
 
@@ -27,10 +30,24 @@ let config = {
 if (process.env.NODE_ENV === 'development') {
   config = {
     ...config,
+    output: {
+      ...config.output,
+      file: undefined,
+      dir: 'dev',
+    },
     plugins: [
       ...config.plugins,
       serve({
-        contentBase: ['dist', 'example'],
+        contentBase: ['dev'],
+      }),
+      html({
+        inject: false,
+        template() {
+          let exampleFile = fs.readFileSync(path.join(__dirname, 'example', 'index.html'), 'utf-8');
+          exampleFile = exampleFile.replace('https://cdn.jsdelivr.net/npm/@paintable/core', 'index.js');
+
+          return exampleFile;
+        },
       }),
     ],
   };
