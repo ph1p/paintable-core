@@ -13,6 +13,10 @@
     "lint": "eslint './src/*.ts' --quiet --fix",
     "prepublish": "npm run build"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ph1p/paintable-core"
+  },
   "prettier": {
     "semi": true,
     "trailingComma": "all",
