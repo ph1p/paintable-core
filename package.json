@@ -1,6 +1,6 @@
 {
   "name": "@paintable/core",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "",
   "main": "dist/paintable.common.js",
   "module": "dist/paintable.esm.js",
