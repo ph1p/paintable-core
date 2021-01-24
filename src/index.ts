@@ -230,9 +230,9 @@ export class Paintable {
   }
 
   // Clear complete canvas
-  clear(completeClear = false): void {
+  clear(keepHistory = false): void {
     this.clearCanvas();
-    if (!completeClear) {
+    if (keepHistory) {
       this.registry.push({
         type: 'clear'
       });
