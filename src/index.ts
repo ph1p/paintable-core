@@ -32,6 +32,7 @@ export class Paintable {
   isEraserActive = false;
   isActive = false;
 
+  canvas: HTMLCanvasElement | null = null;
   ctx: CanvasRenderingContext2D | null = null;
   startedDrawing = false;
   thresholdReached = false;
@@ -44,16 +45,16 @@ export class Paintable {
   startEvent: (e: any) => void;
   endEvent: (e: any) => void;
 
-  constructor(private readonly canvas: HTMLCanvasElement, initEvents = true) {
+  constructor() {
     this.moveEvent = this.drawMove.bind(this);
     this.startEvent = this.drawStart.bind(this);
     this.endEvent = this.drawEnd.bind(this);
 
-    this.reInit(initEvents);
+    this.reInit();
   }
 
   // Init paintable component and set all variables
-  public reInit(events = true): void {
+  public reInit(): void {
     this.isActive = false;
     // reset registry and redo list
     this.registry = [];
@@ -61,23 +62,30 @@ export class Paintable {
 
     try {
       this.pointCoords = [];
-      this.ctx = this.canvas.getContext('2d');
 
       // load current saved canvas registry
       this.load();
 
-      if (events) {
-        this.registerEvents();
-      }
       // this.$emit('toggle-paintable', this.isActive);
     } catch (err) {
       // this.hide = true;
     }
   }
 
+  public setCanvas(canvas: HTMLCanvasElement, shouldRegisterEvents = true): void {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+
+    if (shouldRegisterEvents) {
+      this.registerEvents();
+    }
+
+    this.reInit();
+  }
+
   public setName(name: string): void {
     this.name = name;
-    this.reInit(false);
+    this.reInit();
   }
 
   public setColor(color: string): void {
@@ -147,22 +155,24 @@ export class Paintable {
 
   // register and unregister all events
   private registerEvents() {
-    this.canvas.removeEventListener('mousemove', this.moveEvent);
-    this.canvas.removeEventListener('mousedown', this.startEvent);
-    this.canvas.removeEventListener('mouseup', this.endEvent);
+    if (this.canvas) {
+      this.canvas.removeEventListener('mousemove', this.moveEvent);
+      this.canvas.removeEventListener('mousedown', this.startEvent);
+      this.canvas.removeEventListener('mouseup', this.endEvent);
 
-    this.canvas.removeEventListener('touchmove', this.moveEvent);
-    this.canvas.removeEventListener('touchstart', this.startEvent);
-    this.canvas.removeEventListener('touchend', this.endEvent);
+      this.canvas.removeEventListener('touchmove', this.moveEvent);
+      this.canvas.removeEventListener('touchstart', this.startEvent);
+      this.canvas.removeEventListener('touchend', this.endEvent);
 
-    if (this.isMouse) {
-      this.canvas.addEventListener('mousemove', this.moveEvent);
-      this.canvas.addEventListener('mousedown', this.startEvent);
-      this.canvas.addEventListener('mouseup', this.endEvent);
-    } else {
-      this.canvas.addEventListener('touchmove', this.moveEvent);
-      this.canvas.addEventListener('touchstart', this.startEvent);
-      this.canvas.addEventListener('touchend', this.endEvent);
+      if (this.isMouse) {
+        this.canvas.addEventListener('mousemove', this.moveEvent);
+        this.canvas.addEventListener('mousedown', this.startEvent);
+        this.canvas.addEventListener('mouseup', this.endEvent);
+      } else {
+        this.canvas.addEventListener('touchmove', this.moveEvent);
+        this.canvas.addEventListener('touchstart', this.startEvent);
+        this.canvas.addEventListener('touchend', this.endEvent);
+      }
     }
   }
 
@@ -212,7 +222,9 @@ export class Paintable {
   }
 
   private clearCanvas() {
-    this.ctx?.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    if (this.canvas) {
+      this.ctx?.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
   }
 
   // Clear complete canvas
@@ -236,12 +248,15 @@ export class Paintable {
     const blank = document.createElement('canvas');
     const blankCtx = blank.getContext('2d');
 
-    blankCtx?.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    if (this.canvas) {
+      blankCtx?.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    blank.width = this.canvas.width;
-    blank.height = this.canvas.height;
+      blank.width = this.canvas.width;
+      blank.height = this.canvas.height;
 
-    return blank.toDataURL() === this.canvas.toDataURL();
+      return blank.toDataURL() === this.canvas.toDataURL();
+    }
+    return true;
   }
 
   // Get canvas registry from storage
@@ -269,8 +284,8 @@ export class Paintable {
       this.setItem(
         this.name,
         JSON.stringify({
-          width: this.canvas.width,
-          height: this.canvas.height,
+          width: this.canvas?.width,
+          height: this.canvas?.height,
           elements: this.registry,
         }),
       );
@@ -286,7 +301,7 @@ export class Paintable {
     e.preventDefault();
     this.thresholdReached = false;
 
-    if (this.isActive) {
+    if (this.isActive && this.canvas) {
       this.drawEntriesFromRegistry();
 
       // clear redo list
@@ -315,7 +330,7 @@ export class Paintable {
 
   // End of drawing a line
   private drawEnd() {
-    if (this.isActive) {
+    if (this.isActive && this.canvas) {
       const points = this.pointCoords.filter(
         (_, i) => i === 0 || i % 4 === 0 || i === this.pointCoords.length - 1,
       );
@@ -338,7 +353,6 @@ export class Paintable {
 
   // Generate line from points array
   private drawLine(entry: Partial<RegistryEntry>) {
-
     if (entry && this.ctx) {
       this.ctx.lineCap = 'round';
       this.ctx.lineWidth = entry.width || this.lineWidth;
@@ -371,7 +385,7 @@ export class Paintable {
   private drawMove(e: any) {
     e.preventDefault();
 
-    if (this.isActive && this.startedDrawing) {
+    if (this.isActive && this.startedDrawing && this.canvas) {
       const x = !this.isMouse ? e.targetTouches[0].clientX : e.clientX;
       const y = !this.isMouse ? e.targetTouches[0].clientY : e.clientY;
 

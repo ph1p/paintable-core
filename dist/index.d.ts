@@ -1,5 +1,4 @@
 export declare class Paintable {
-    private readonly canvas;
     name: string;
     color: string;
     lineWidth: number;
@@ -12,6 +11,7 @@ export declare class Paintable {
     canvasId: number;
     isEraserActive: boolean;
     isActive: boolean;
+    canvas: HTMLCanvasElement | null;
     ctx: CanvasRenderingContext2D | null;
     startedDrawing: boolean;
     thresholdReached: boolean;
@@ -21,8 +21,9 @@ export declare class Paintable {
     moveEvent: (e: any) => void;
     startEvent: (e: any) => void;
     endEvent: (e: any) => void;
-    constructor(canvas: HTMLCanvasElement, initEvents?: boolean);
+    constructor(initEvents?: boolean);
     reInit(events?: boolean): void;
+    setCanvas(canvas: HTMLCanvasElement): void;
     setName(name: string): void;
     setColor(color: string): void;
     setActive(active: boolean): void;
