@@ -149,6 +149,8 @@ export class Paintable {
 
   // Cancel current drawing and remove lines
   public cancel(): void {
+    this.registry = [];
+    this.redoList = [];
     this.load();
     this.isActive = false;
   }
