@@ -21,9 +21,9 @@ export declare class Paintable {
     moveEvent: (e: any) => void;
     startEvent: (e: any) => void;
     endEvent: (e: any) => void;
-    constructor(initEvents?: boolean);
-    reInit(events?: boolean): void;
-    setCanvas(canvas: HTMLCanvasElement): void;
+    constructor();
+    reInit(): void;
+    setCanvas(canvas: HTMLCanvasElement, shouldRegisterEvents?: boolean): void;
     setName(name: string): void;
     setColor(color: string): void;
     setActive(active: boolean): void;
