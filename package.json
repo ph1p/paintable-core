@@ -11,7 +11,7 @@
     "build": "NODE_ENV=production rollup -c",
     "dev": "NODE_ENV=development rollup -c -w",
     "lint": "eslint './src/*.ts' --quiet --fix",
-    "prepublish": "npm run build"
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
