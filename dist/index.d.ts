@@ -1,3 +1,14 @@
+interface RegistryEntry {
+    color?: string;
+    width?: number;
+    points?: any[];
+    type: 'line' | 'clear';
+}
+interface Store {
+    width?: number;
+    height?: number;
+    elements: RegistryEntry[];
+}
 export declare class Paintable {
     name: string;
     color: string;
@@ -30,9 +41,11 @@ export declare class Paintable {
     setThreshold(threshold: number): void;
     setLineWidth(lineWidth: number): void;
     setLineWidthEraser(lineWidth: number): void;
-    private setItem;
-    private getItem;
-    private removeItem;
+    serialize(data: Store): string;
+    deserialize(data: string): Store;
+    setItem(key: string, value: Store): void;
+    getItem(key: string): Promise<Store>;
+    removeItem(key: string): void;
     get scalingFactor(): number;
     get isTouch(): boolean;
     cancel(): void;
@@ -55,3 +68,4 @@ export declare class Paintable {
     private drawLine;
     private drawMove;
 }
+export {};
