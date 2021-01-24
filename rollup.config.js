@@ -43,7 +43,7 @@ if (process.env.NODE_ENV === 'development') {
       html({
         inject: false,
         template() {
-          let exampleFile = fs.readFileSync(path.join(__dirname, 'example', 'index.html'), 'utf-8');
+          let exampleFile = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf-8');
           exampleFile = exampleFile.replace('https://cdn.jsdelivr.net/npm/@paintable/core', 'index.js');
 
           return exampleFile;

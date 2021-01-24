@@ -25,14 +25,14 @@
     <input id="lineWidth" type="range" min="5" max="70" value="5" />
     <input id="color" type="color" value="#000000" />
 
-    <script src="https://cdn.jsdelivr.net/npm/@paintable/core"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@paintable/core@latest"></script>
     <script type="module">
-      const canvas = document.querySelector('#canvas');
+      const paintable = new Paintable();
 
-      const paintable = new Paintable(canvas);
+      paintable.setCanvas(document.querySelector('#canvas'));
+      paintable.setColor('#000000');
 
       document.querySelector('#switch').addEventListener('click', () => paintable.setName('paintable2'));
-      paintable.setColor('rgba(0,0,0,0.5)');
       document
         .querySelector('#lineWidth')
         .addEventListener('input', (e) => paintable.setLineWidth(e.currentTarget.value));
