@@ -5,7 +5,7 @@ interface Point {
 interface RegistryEntry {
   color?: string;
   width?: number;
-  points?: Point[];
+  points?: any[];
   type: 'line' | 'clear';
 }
 interface Store {
@@ -114,18 +114,65 @@ export class Paintable {
     this.lineWidth = lineWidth;
   }
 
+  // transform the data before saving
+  serialize(data: Store): string {
+    data.elements = data.elements.map((element: RegistryEntry) => {
+      if (element.type === 'line') {
+        return {
+          ...element,
+          points: element.points?.reduce((prev, point) => [...prev, point.x, point.y], [])
+        }
+      }
+
+      return element;
+    });
+
+    return JSON.stringify(data);
+  }
+
+  // transform data before loasing
+  deserialize(data: string): Store {
+    const parsedData = JSON.parse(data);
+
+    parsedData.elements = parsedData.elements.map((element: RegistryEntry) => {
+      if (element.type === 'line') {
+
+        let points = undefined;
+
+        if (element?.points) {
+          points = [];
+          for (let i = 0; i < element?.points?.length; i += 2) {
+            points.push({
+              x: element?.points?.[i],
+              y: element?.points?.[i + 1]
+            })
+          }
+        }
+
+        return {
+          ...element,
+          points
+        }
+      }
+
+      return element;
+    });
+
+    return parsedData;
+  }
+
   // Set storage item
-  private setItem(key: string, value: string) {
-    localStorage.setItem(key, value);
+  setItem(key: string, value: Store): void {
+    localStorage.setItem(key, this.serialize(value));
   }
 
   // get storage item
-  private async getItem(key: string): Promise<Store> {
+  async getItem(key: string): Promise<Store> {
     return new Promise((resolve, reject) => {
-      const itemFromStorage = localStorage.getItem(key);
+      const itemFromStorage = this.deserialize(localStorage.getItem(key) || '');
 
       if (itemFromStorage) {
-        resolve(JSON.parse(itemFromStorage));
+        resolve(itemFromStorage);
       } else {
         reject();
       }
@@ -133,7 +180,7 @@ export class Paintable {
   }
 
   //Remove item from storage
-  private removeItem(key: string) {
+  removeItem(key: string): void {
     localStorage.removeItem(key);
   }
 
@@ -149,10 +196,12 @@ export class Paintable {
 
   // Cancel current drawing and remove lines
   public cancel(): void {
-    this.registry = [];
-    this.redoList = [];
-    this.load();
-    this.isActive = false;
+    if (this.isActive) {
+      this.registry = [];
+      this.redoList = [];
+      this.load();
+      this.isActive = false;
+    }
   }
 
   // register and unregister all events
@@ -224,21 +273,23 @@ export class Paintable {
   }
 
   private clearCanvas() {
-    if (this.canvas) {
+    if (this.canvas && this.isActive) {
       this.ctx?.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
   }
 
   // Clear complete canvas
   clear(keepHistory = false): void {
-    this.clearCanvas();
-    if (keepHistory) {
-      this.registry.push({
-        type: 'clear'
-      });
-    } else {
-      this.registry = [];
-      this.redoList = [];
+    if (this.isActive) {
+      this.clearCanvas();
+      if (keepHistory) {
+        this.registry.push({
+          type: 'clear'
+        });
+      } else {
+        this.registry = [];
+        this.redoList = [];
+      }
     }
   }
 
@@ -277,25 +328,27 @@ export class Paintable {
    * If its not empty save it to the storage.
    */
   public save(): void {
-    // reset to pencil
-    this.isEraserActive = false;
+    if (this.isActive) {
+      // reset to pencil
+      this.isEraserActive = false;
 
-    if (this.isCanvasBlank()) {
-      this.removeItem(this.name);
-    } else {
-      this.setItem(
-        this.name,
-        JSON.stringify({
-          width: this.canvas?.width,
-          height: this.canvas?.height,
-          elements: this.registry,
-        }),
-      );
+      if (this.isCanvasBlank()) {
+        this.removeItem(this.name);
+      } else {
+        this.setItem(
+          this.name,
+          {
+            width: this.canvas?.width,
+            height: this.canvas?.height,
+            elements: this.registry,
+          },
+        );
+      }
+
+      this.redoList = [];
+
+      this.canvasIsEmpty = this.isCanvasBlank();
     }
-
-    this.redoList = [];
-
-    this.canvasIsEmpty = this.isCanvasBlank();
   }
 
   // Start drawing lines
