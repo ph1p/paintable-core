@@ -1,7 +1,11 @@
+interface Point {
+    x: number;
+    y: number;
+}
 interface RegistryEntry {
     color?: string;
     width?: number;
-    points?: any[];
+    points?: Point[];
     type: 'line' | 'clear';
 }
 interface Store {
