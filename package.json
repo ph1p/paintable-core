@@ -1,6 +1,6 @@
 {
   "name": "@paintable/core",
-  "version": "0.2.0",
+  "version": "0.2.3",
   "description": "",
   "main": "dist/paintable.common.js",
   "module": "dist/paintable.esm.js",
@@ -11,7 +11,7 @@
     "build": "NODE_ENV=production rollup -c",
     "dev": "NODE_ENV=development rollup -c -w",
     "lint": "eslint './src/*.ts' --quiet --fix",
-    "prepublish": "npm run build"
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",

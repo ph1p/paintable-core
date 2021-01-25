@@ -1,7 +1,11 @@
+interface Point {
+    x: number;
+    y: number;
+}
 interface RegistryEntry {
     color?: string;
     width?: number;
-    points?: any[];
+    points?: Point[];
     type: 'line' | 'clear';
 }
 interface Store {
@@ -55,7 +59,12 @@ export declare class Paintable {
     private undoRedoCanvasState;
     private drawEntriesFromRegistry;
     private clearCanvas;
-    clear(keepHistory?: boolean): void;
+    /**
+     * Clear complete canvas
+     * @param keepHistory set true if keep the complete history
+     * @param force clear everything no matter if it is active
+     */
+    clear(keepHistory?: boolean, force?: boolean): void;
     private isCanvasBlank;
     load(): Promise<void>;
     /**

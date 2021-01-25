@@ -5,7 +5,7 @@ interface Point {
 interface RegistryEntry {
   color?: string;
   width?: number;
-  points?: any[];
+  points?: Point[];
   type: 'line' | 'clear';
 }
 interface Store {
@@ -55,10 +55,9 @@ export class Paintable {
 
   // Init paintable component and set all variables
   public reInit(): void {
+    this.clear(false, true);
+
     this.isActive = false;
-    // reset registry and redo list
-    this.registry = [];
-    this.redoList = [];
 
     try {
       this.pointCoords = [];
@@ -116,18 +115,24 @@ export class Paintable {
 
   // transform the data before saving
   serialize(data: Store): string {
-    data.elements = data.elements.map((element: RegistryEntry) => {
+    const serializedElements = data.elements.map((element: RegistryEntry) => {
       if (element.type === 'line') {
         return {
           ...element,
-          points: element.points?.reduce((prev, point) => [...prev, point.x, point.y], [])
-        }
+          points: (((element.points || []) as unknown) as number[]).reduce(
+            (prev: number[], point: any) => [...prev, point.x, point.y],
+            [],
+          ),
+        };
       }
 
       return element;
     });
 
-    return JSON.stringify(data);
+    return JSON.stringify({
+      ...data,
+      elements: serializedElements,
+    });
   }
 
   // transform data before loasing
@@ -136,7 +141,6 @@ export class Paintable {
 
     parsedData.elements = parsedData.elements.map((element: RegistryEntry) => {
       if (element.type === 'line') {
-
         let points = undefined;
 
         if (element?.points) {
@@ -144,15 +148,15 @@ export class Paintable {
           for (let i = 0; i < element?.points?.length; i += 2) {
             points.push({
               x: element?.points?.[i],
-              y: element?.points?.[i + 1]
-            })
+              y: element?.points?.[i + 1],
+            });
           }
         }
 
         return {
           ...element,
-          points
-        }
+          points,
+        };
       }
 
       return element;
@@ -197,8 +201,7 @@ export class Paintable {
   // Cancel current drawing and remove lines
   public cancel(): void {
     if (this.isActive) {
-      this.registry = [];
-      this.redoList = [];
+      this.clear();
       this.load();
       this.isActive = false;
     }
@@ -265,7 +268,7 @@ export class Paintable {
 
     this.registry.forEach((entry) => {
       if (entry.type === 'line') {
-        this.drawLine(entry)
+        this.drawLine(entry);
       } else if (entry.type === 'clear') {
         this.clearCanvas();
       }
@@ -273,18 +276,22 @@ export class Paintable {
   }
 
   private clearCanvas() {
-    if (this.canvas && this.isActive) {
+    if (this.canvas) {
       this.ctx?.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
   }
 
-  // Clear complete canvas
-  clear(keepHistory = false): void {
-    if (this.isActive) {
+  /**
+   * Clear complete canvas
+   * @param keepHistory set true if keep the complete history
+   * @param force clear everything no matter if it is active
+   */
+  clear(keepHistory = false, force = false): void {
+    if (this.isActive || force) {
       this.clearCanvas();
       if (keepHistory) {
         this.registry.push({
-          type: 'clear'
+          type: 'clear',
         });
       } else {
         this.registry = [];
@@ -315,12 +322,11 @@ export class Paintable {
   // Get canvas registry from storage
   async load(): Promise<void> {
     try {
-      this.clearCanvas();
       const store = await this.getItem(this.name);
       this.registry = store.elements || [];
       this.drawEntriesFromRegistry();
       this.canvasIsEmpty = this.isCanvasBlank();
-    } catch { }
+    } catch {}
   }
 
   /**
@@ -335,14 +341,11 @@ export class Paintable {
       if (this.isCanvasBlank()) {
         this.removeItem(this.name);
       } else {
-        this.setItem(
-          this.name,
-          {
-            width: this.canvas?.width,
-            height: this.canvas?.height,
-            elements: this.registry,
-          },
-        );
+        this.setItem(this.name, {
+          width: this.canvas?.width,
+          height: this.canvas?.height,
+          elements: this.registry,
+        });
       }
 
       this.redoList = [];
@@ -386,9 +389,7 @@ export class Paintable {
   // End of drawing a line
   private drawEnd() {
     if (this.isActive && this.canvas) {
-      const points = this.pointCoords.filter(
-        (_, i) => i === 0 || i % 4 === 0 || i === this.pointCoords.length - 1,
-      );
+      const points = this.pointCoords.filter((_, i) => i === 0 || i % 4 === 0 || i === this.pointCoords.length - 1);
 
       this.registry.push({
         width: this.lineWidth,
@@ -456,7 +457,7 @@ export class Paintable {
         if (this.threshold) {
           const distanceFirstAndLastPoint = Math.sqrt(
             Math.pow(this.pointCoords[this.pointCoords.length - 1].y - this.pointCoords[0].y, 2) +
-            Math.pow(this.pointCoords[this.pointCoords.length - 1].x - this.pointCoords[0].x, 2),
+              Math.pow(this.pointCoords[this.pointCoords.length - 1].x - this.pointCoords[0].x, 2),
           );
 
           if (distanceFirstAndLastPoint > this.threshold) {
@@ -467,7 +468,6 @@ export class Paintable {
           }
         }
 
-
         if (this.ctx) {
           this.ctx.lineCap = 'round';
           this.ctx.lineWidth = this.lineWidth;
@@ -477,7 +477,7 @@ export class Paintable {
         this.drawLine({
           color: this.color,
           width: this.lineWidth,
-          points: this.pointCoords
+          points: this.pointCoords,
         });
       }
     }
