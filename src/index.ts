@@ -55,10 +55,8 @@ export class Paintable {
 
   // Init paintable component and set all variables
   public reInit(): void {
+    this.clear(false, true);
     this.isActive = false;
-    // reset registry and redo list
-    this.registry = [];
-    this.redoList = [];
 
     try {
       this.pointCoords = [];
@@ -197,8 +195,7 @@ export class Paintable {
   // Cancel current drawing and remove lines
   public cancel(): void {
     if (this.isActive) {
-      this.registry = [];
-      this.redoList = [];
+      this.clear();
       this.load();
       this.isActive = false;
     }
@@ -278,9 +275,13 @@ export class Paintable {
     }
   }
 
-  // Clear complete canvas
-  clear(keepHistory = false): void {
-    if (this.isActive) {
+  /**
+   * Clear complete canvas
+   * @param keepHistory set true if keep the complete history
+   * @param force clear everything no matter if it is active
+   */
+  clear(keepHistory = false, force = false): void {
+    if (this.isActive || force) {
       this.clearCanvas();
       if (keepHistory) {
         this.registry.push({
