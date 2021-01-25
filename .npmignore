@@ -2,4 +2,8 @@ example
 src
 tsconfig*
 dist
-.eslintrc
+.eslintrc.js
+rollup.config.js
+public
+dev
+.vercel
