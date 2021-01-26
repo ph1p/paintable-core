@@ -9,7 +9,30 @@ npm install @paintable/core
 
 ### How to use
 
-You can find a full working example inside the `example` folder.
+This is the smallest example. It uses a CDN to load the library.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <body>
+    <canvas id="canvas" height="500" width="500"></canvas><br />
+
+    <button id="activate">activate</button><br /><br />
+
+    <script src="https://cdn.jsdelivr.net/npm/@paintable/core"></script>
+    <script>
+      // create instance
+      const paintable = new Paintable();
+
+      // set the canvas element
+      paintable.setCanvas(document.querySelector('#canvas'));
+
+      // activate paintable
+      paintable.setActive(true);
+    </script>
+  </body>
+</html>
+```
 
 ### Development
 
