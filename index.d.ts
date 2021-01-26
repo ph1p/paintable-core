@@ -23,7 +23,6 @@ export declare class Paintable {
     currentY: number;
     factor: number;
     canvasIsEmpty: boolean;
-    canvasId: number;
     isEraserActive: boolean;
     isActive: boolean;
     canvas: HTMLCanvasElement | null;

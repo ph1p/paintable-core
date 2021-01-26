@@ -137,7 +137,6 @@ if (process.env.NODE_ENV === 'production') {
           useTsconfigDeclarationDir: true,
           tsconfigOverride: {
             compilerOptions: {
-              declaration: true,
               target: 'es5',
             },
           },

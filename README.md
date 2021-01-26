@@ -38,5 +38,5 @@ This is the smallest example. It uses a CDN to load the library.
 
 ```bash
 npm run install
-npm run dev
+npm run serve
 ```

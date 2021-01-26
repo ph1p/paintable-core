@@ -27,7 +27,6 @@ export class Paintable {
   factor = 1;
 
   canvasIsEmpty = false;
-  canvasId = Math.round(Math.random() * 1000);
 
   isEraserActive = false;
   isActive = false;
@@ -58,17 +57,10 @@ export class Paintable {
     this.clear(false, true);
 
     this.isActive = false;
+    this.pointCoords = [];
 
-    try {
-      this.pointCoords = [];
-
-      // load current saved canvas registry
-      this.load();
-
-      // this.$emit('toggle-paintable', this.isActive);
-    } catch (err) {
-      // this.hide = true;
-    }
+    // load current saved canvas registry
+    this.load();
   }
 
   public setCanvas(canvas: HTMLCanvasElement, shouldRegisterEvents = true): void {
@@ -438,7 +430,7 @@ export class Paintable {
   }
 
   // Draw line on move and add current position to an array
-  private drawMove(e: any) {
+  private drawMove(e: any, thresholdReachedCallback: () => void = () => {}) {
     e.preventDefault();
 
     if (this.isActive && this.startedDrawing && this.canvas) {
@@ -463,7 +455,7 @@ export class Paintable {
           if (distanceFirstAndLastPoint > this.threshold) {
             if (!this.thresholdReached) {
               this.thresholdReached = true;
-              // this.$emit('threshold-reached');
+              thresholdReachedCallback();
             }
           }
         }
