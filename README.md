@@ -17,8 +17,6 @@ This is the smallest example. It uses a CDN to load the library.
   <body>
     <canvas id="canvas" height="500" width="500"></canvas><br />
 
-    <button id="activate">activate</button><br /><br />
-
     <script src="https://cdn.jsdelivr.net/npm/@paintable/core"></script>
     <script>
       // create instance
