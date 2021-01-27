@@ -6,7 +6,7 @@ interface RegistryEntry {
   color?: string;
   width?: number;
   points?: Point[];
-  type: 'line' | 'clear';
+  type: 'line' | 'clear' | 'eraser';
 }
 interface Store {
   width?: number;
@@ -14,27 +14,38 @@ interface Store {
   elements: RegistryEntry[];
 }
 
+interface Options {
+  scope: string;
+  color: string;
+  // every point index % accuracy
+  accuracy: number;
+  lineWidth: number;
+  threshold: number;
+  factor: number;
+  isEraser: boolean;
+  isActive: boolean;
+  canvas: HTMLCanvasElement;
+}
+
 export class Paintable {
-  name = 'paintable';
+  canvasIsEmpty = false;
+
+  scope = 'paintable';
   color = '#000000';
   lineWidth = 5;
   threshold = 0;
-
-  // isMouse = true;
-  currentX = 0;
-  currentY = 0;
-
   factor = 1;
-
-  canvasIsEmpty = false;
-
-  isEraserActive = false;
+  accuracy = 4;
+  isEraser = false;
   isActive = false;
 
-  canvas: HTMLCanvasElement | null = null;
-  ctx: CanvasRenderingContext2D | null = null;
-  startedDrawing = false;
-  thresholdReached = false;
+  private canvas: HTMLCanvasElement | null = null;
+  private ctx: CanvasRenderingContext2D | null = null;
+
+  private currentX = 0;
+  private currentY = 0;
+  private startedDrawing = false;
+  private thresholdReached = false;
 
   private pointCoords: Point[] = [];
   private redoList: RegistryEntry[] = [];
@@ -44,12 +55,23 @@ export class Paintable {
   startEvent: (e: MouseEvent | TouchEvent) => void;
   endEvent: (e: MouseEvent | TouchEvent) => void;
 
-  constructor() {
+  constructor(options: Partial<Options> = {}) {
     this.moveEvent = this.drawMove.bind(this);
     this.startEvent = this.drawStart.bind(this);
     this.endEvent = this.drawEnd.bind(this);
 
-    this.reInit();
+    this.scope = options.scope || this.scope;
+    this.color = options.color || this.color;
+    this.lineWidth = options.lineWidth || this.lineWidth;
+    this.threshold = options.threshold || this.threshold;
+    this.factor = options.factor || this.factor;
+    this.isEraser = options.isEraser || this.isEraser;
+    this.isActive = options.isActive || this.isActive;
+    this.accuracy = options.accuracy || this.accuracy;
+
+    if (options.canvas) {
+      this.setCanvas(options.canvas);
+    }
   }
 
   // Init paintable component and set all variables
@@ -74,8 +96,16 @@ export class Paintable {
     }
   }
 
-  public setName(name: string): void {
-    this.name = name;
+  public setAccuracy(accuracy: number): void {
+    this.accuracy = accuracy;
+  }
+
+  public setFactor(factor: number): void {
+    this.factor = factor;
+  }
+
+  public setScope(scope: string): void {
+    this.scope = scope;
     this.reInit();
   }
 
@@ -103,6 +133,10 @@ export class Paintable {
 
   public setLineWidthEraser(lineWidth: number): void {
     this.lineWidth = lineWidth;
+  }
+
+  public setEraser(isEraser: boolean): void {
+    this.isEraser = isEraser;
   }
 
   // transform the data before saving
@@ -248,11 +282,21 @@ export class Paintable {
     }
   }
 
+  /**
+   * Draw all entries from registry
+   */
   private drawEntriesFromRegistry() {
     this.clearCanvas();
 
-    this.registry.forEach((entry) => {
-      if (entry.type === 'line') {
+    const clearIndex = this.registry.map((entry) => entry.type).lastIndexOf('clear');
+    const allElementSinceLastClear =
+      clearIndex <= 0 ? this.registry : this.registry.slice(clearIndex + 1, this.registry.length);
+
+    allElementSinceLastClear.forEach((entry) => {
+      if (entry.type === 'line' || entry.type === 'eraser') {
+        if (this.ctx) {
+          this.ctx.globalCompositeOperation = entry.type === 'eraser' ? 'destination-out' : 'source-over';
+        }
         this.drawLine(entry);
       } else if (entry.type === 'clear') {
         this.clearCanvas();
@@ -307,11 +351,11 @@ export class Paintable {
   // Get canvas registry from storage
   async load(): Promise<void> {
     try {
-      const store = await this.getItem(this.name);
+      const store = await this.getItem(this.scope);
       this.registry = store.elements || [];
       this.drawEntriesFromRegistry();
       this.canvasIsEmpty = this.isCanvasBlank();
-    } catch { }
+    } catch {}
   }
 
   /**
@@ -321,12 +365,12 @@ export class Paintable {
   public save(): void {
     if (this.isActive) {
       // reset to pencil
-      this.isEraserActive = false;
+      this.isEraser = false;
 
       if (this.isCanvasBlank()) {
-        this.removeItem(this.name);
+        this.removeItem(this.scope);
       } else {
-        this.setItem(this.name, {
+        this.setItem(this.scope, {
           width: this.canvas?.width,
           height: this.canvas?.height,
           elements: this.registry,
@@ -366,7 +410,7 @@ export class Paintable {
       }
 
       if (this.ctx) {
-        this.ctx.globalCompositeOperation = this.isEraserActive ? 'destination-out' : 'source-over';
+        this.ctx.globalCompositeOperation = this.isEraser ? 'destination-out' : 'source-over';
       }
     }
   }
@@ -375,12 +419,14 @@ export class Paintable {
   private drawEnd(e: MouseEvent | TouchEvent) {
     e.preventDefault();
     if (this.isActive && this.canvas) {
-      const points = this.pointCoords.filter((_, i) => i === 0 || i % 4 === 0 || i === this.pointCoords.length - 1);
+      const points = this.isEraser
+        ? this.pointCoords
+        : this.pointCoords.filter((_, i) => i === 0 || i % this.accuracy === 0 || i === this.pointCoords.length - 1);
 
       this.registry.push({
         width: this.lineWidth,
         color: this.color,
-        type: 'line',
+        type: this.isEraser ? 'eraser' : 'line',
         points,
       });
 
@@ -393,9 +439,8 @@ export class Paintable {
     }
   }
 
-
   // Draw line on move and add current position to an array
-  private drawMove(e: MouseEvent | TouchEvent, thresholdReachedCallback: () => void = () => { }) {
+  private drawMove(e: MouseEvent | TouchEvent, thresholdReachedCallback: () => void = () => {}) {
     e.preventDefault();
     e.stopPropagation();
 
@@ -415,7 +460,7 @@ export class Paintable {
         if (this.threshold) {
           const distanceFirstAndLastPoint = Math.sqrt(
             Math.pow(this.pointCoords[this.pointCoords.length - 1].y - this.pointCoords[0].y, 2) +
-            Math.pow(this.pointCoords[this.pointCoords.length - 1].x - this.pointCoords[0].x, 2),
+              Math.pow(this.pointCoords[this.pointCoords.length - 1].x - this.pointCoords[0].x, 2),
           );
 
           if (distanceFirstAndLastPoint > this.threshold) {

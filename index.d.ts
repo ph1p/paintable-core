@@ -6,56 +6,72 @@ interface RegistryEntry {
     color?: string;
     width?: number;
     points?: Point[];
-    type: 'line' | 'clear';
+    type: 'line' | 'clear' | 'eraser';
 }
 interface Store {
     width?: number;
     height?: number;
     elements: RegistryEntry[];
 }
+interface Options {
+    scope: string;
+    color: string;
+    accuracy: number;
+    lineWidth: number;
+    threshold: number;
+    factor: number;
+    isEraser: boolean;
+    isActive: boolean;
+    canvas: HTMLCanvasElement;
+}
 export declare class Paintable {
-    name: string;
+    canvasIsEmpty: boolean;
+    scope: string;
     color: string;
     lineWidth: number;
     threshold: number;
-    isMouse: boolean;
-    currentX: number;
-    currentY: number;
     factor: number;
-    canvasIsEmpty: boolean;
-    isEraserActive: boolean;
+    accuracy: number;
+    isEraser: boolean;
     isActive: boolean;
-    canvas: HTMLCanvasElement | null;
-    ctx: CanvasRenderingContext2D | null;
-    startedDrawing: boolean;
-    thresholdReached: boolean;
+    private canvas;
+    private ctx;
+    private currentX;
+    private currentY;
+    private startedDrawing;
+    private thresholdReached;
     private pointCoords;
     private redoList;
     private registry;
-    moveEvent: (e: any) => void;
-    startEvent: (e: any) => void;
-    endEvent: (e: any) => void;
-    constructor();
+    moveEvent: (e: MouseEvent | TouchEvent) => void;
+    startEvent: (e: MouseEvent | TouchEvent) => void;
+    endEvent: (e: MouseEvent | TouchEvent) => void;
+    constructor(options?: Partial<Options>);
     reInit(): void;
     setCanvas(canvas: HTMLCanvasElement, shouldRegisterEvents?: boolean): void;
-    setName(name: string): void;
+    setAccuracy(accuracy: number): void;
+    setFactor(factor: number): void;
+    setScope(scope: string): void;
     setColor(color: string): void;
     setActive(active: boolean): void;
     setThreshold(threshold: number): void;
     setLineWidth(lineWidth: number): void;
     setLineWidthEraser(lineWidth: number): void;
+    setEraser(isEraser: boolean): void;
     serialize(data: Store): string;
     deserialize(data: string): Store;
     setItem(key: string, value: Store): void;
     getItem(key: string): Promise<Store>;
     removeItem(key: string): void;
     get scalingFactor(): number;
-    get isTouch(): boolean;
     cancel(): void;
     private registerEvents;
     undo(): void;
     redo(): void;
     private undoRedoCanvasState;
+    /**
+     * Draw all entries from registry
+     */
     private drawEntriesFromRegistry;
     private clearCanvas;
     /**
@@ -73,7 +89,7 @@ export declare class Paintable {
     save(): void;
     private drawStart;
     private drawEnd;
-    private drawLine;
     private drawMove;
+    private drawLine;
 }
 export {};

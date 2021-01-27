@@ -20,40 +20,65 @@ const htmlTemplate = ({ entrypoints }) => {
     ${entrypoints.map(({ importPath }) => `<script src="${importPath}"></script>`)}
   </head>
   <body>
-    <canvas id="canvas" height="500" width="500"></canvas><br />
+    <canvas id="canvas" height="500" width="500"></canvas><br /><br />
 
     <button id="activate">activate</button><br /><br />
     <button id="switch">switch to other paintable</button><br /><br />
     <button id="undo">undo</button>
-    <button id="redo">redo</button><br /><br />
+    <button id="redo">redo</button><br /><br /><br />
     <button id="save">save</button>
-    <button id="load">load</button><br /><br />
-    <button id="cancel">cancel</button>
-    <button id="clear">clear</button>
+    <button id="cancel">cancel</button><br /><br />
+    <button id="pencil">eraser</button>
     <input id="lineWidth" type="range" min="5" max="70" value="5" />
     <input id="color" type="color" value="#000000" />
+    <button id="clear">clear</button>
 
     <script>
-      const paintable = new Paintable();
+      let scope = 'my-scope-name';
+      const paintable = new Paintable({
+        scope,
+        canvas: document.querySelector('#canvas'),
+        color: '#000000',
+        accuracy: 6
+      });
 
-      paintable.setCanvas(document.querySelector('#canvas'));
-      paintable.setColor('#000000');
+      document.querySelector('#switch').addEventListener('click', () => {
+        scope = scope === 'my-scope-name' ? 'paintable' : 'my-scope-name';
 
-      document.querySelector('#switch').addEventListener('click', () => paintable.setName('paintable2'));
+        paintable.setScope(scope);
+      });
       document
         .querySelector('#lineWidth')
         .addEventListener('input', (e) => paintable.setLineWidth(e.currentTarget.value));
       document.querySelector('#color').addEventListener('input', (e) => paintable.setColor(e.currentTarget.value));
       document.querySelector('#undo').addEventListener('click', () => paintable.undo());
       document.querySelector('#redo').addEventListener('click', () => paintable.redo());
-      document.querySelector('#save').addEventListener('click', () => paintable.save());
-      document.querySelector('#load').addEventListener('click', () => paintable.load());
-      document.querySelector('#cancel').addEventListener('click', () => paintable.cancel());
-      document.querySelector('#activate').addEventListener('click', () => paintable.setActive(!paintable.isActive));
+      document.querySelector('#save').addEventListener('click', () => {
+        paintable.save();
+        setTexts();
+      });
+      document.querySelector('#cancel').addEventListener('click', () => {
+        paintable.cancel();
+        setTexts();
+      });
+      document.querySelector('#activate').addEventListener('click', () => {
+        paintable.setActive(!paintable.isActive);
+        setTexts();
+      });
+      document.querySelector('#pencil').addEventListener('click', () => {
+        paintable.setEraser(!paintable.isEraser);
+        setTexts();
+      });
       document.querySelector('#clear').addEventListener('click', () => {
-        paintable.clear();
+        paintable.clear(true);
         paintable.save();
       });
+
+
+      function setTexts() {
+        document.querySelector('#activate').innerText = paintable.isActive ? 'deactivate' : 'activate';
+        document.querySelector('#pencil').innerText = paintable.isEraser ? 'pencil' : 'eraser';
+      }
     </script>
   </body>
 </html>`;

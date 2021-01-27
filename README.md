@@ -9,6 +9,36 @@ npm install @paintable/core
 
 ### How to use
 
+First of all, you need to know all about the properties and methods of the `paintable` instance.
+
+#### Instance properities
+
+These are the properties of the paintable. You can pass them initially as an object to the constructor or/and set them with an appropriate `method`. For example if you want to set the `canvas` asynchronously.
+
+| Value/Key | Method         | Type              | Description                             | Default   | Required |
+| --------- | -------------- | ----------------- | --------------------------------------- | --------- | -------- |
+| scope     | setScope()     | string            | A unqiue "scope" name for your painting | paintable | -        |
+| color     | setColor()     | string            | Drawing color                           | #000000   | -        |
+| accuracy  | setAccuracy()  | number            | Line accuracy. higher = better curves   | 4         | -        |
+| lineWidth | setLineWidth() | number            | Size of line                            | 5         | -        |
+| threshold | setThreshold() | number            | Distance after line starts              | 0         | -        |
+| factor    | setFactor()    | number            | Sacling factor                          | 1         | -        |
+| isEraser  | setEraser()    | boolean           | Indicator if eraser is active           | false     | -        |
+| isActive  | setActive()    | boolean           | Indicator if paint is activated         | false     | -        |
+| canvas    | setCanvas()    | HTMLCanvasElement | The canvas element                      | null      | x        |
+
+#### Instance methods to handle the canvas
+
+| Method                         | Description                                                                                        | Only | Only if `isActive` is `true` |
+| ------------------------------ | -------------------------------------------------------------------------------------------------- | ---- | ---------------------------- |
+| undo()                         | Undo step                                                                                          |      | x                            |
+| redo()                         | Redo step                                                                                          |      | x                            |
+| cancel()                       | Cancel draw                                                                                        |      | x                            |
+| save()                         | Save the current image                                                                             |      | x                            |
+| clear(`keepHistory` = `false`) | You can set a `keepHistory` to `true` if you want to keep everything previously painted in history |      | x                            |
+
+#### Example
+
 This is the smallest example. It uses a CDN to load the library.
 
 ```html
@@ -27,6 +57,19 @@ This is the smallest example. It uses a CDN to load the library.
 
       // activate paintable
       paintable.setActive(true);
+
+      // OR with initial values --------------
+
+      // create instance
+      const paintable = new Paintable({
+        // used to identify the paintable
+        scope: 'a-unique-identifier',
+        // set the canvas element
+        canvas: document.querySelector('#canvas'),
+        color: '#000000',
+        active: true
+        accuracy: 6
+      });
     </script>
   </body>
 </html>
