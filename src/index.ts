@@ -322,6 +322,7 @@ export class Paintable {
           type: 'clear',
         });
       } else {
+        this.removeItem(this.scope);
         this.registry = [];
         this.redoList = [];
       }

@@ -51,13 +51,13 @@ These are the properties of the paintable. You can pass them initially as an obj
 
 #### Instance methods to handle the canvas
 
-| Method                         | Description                                                                                        | Only | Only if `isActive` is `true` |
-| ------------------------------ | -------------------------------------------------------------------------------------------------- | ---- | ---------------------------- |
-| undo()                         | Undo step                                                                                          |      | x                            |
-| redo()                         | Redo step                                                                                          |      | x                            |
-| cancel()                       | Cancel draw                                                                                        |      | x                            |
-| save()                         | Save the current image                                                                             |      | x                            |
-| clear(`keepHistory` = `false`) | You can set a `keepHistory` to `true` if you want to keep everything previously painted in history |      | x                            |
+| Method                                            | Description                                                                                                                                                                     | Only | Only if `isActive` is `true` |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- | ---------------------------- |
+| undo()                                            | Undo step                                                                                                                                                                       |      | x                            |
+| redo()                                            | Redo step                                                                                                                                                                       |      | x                            |
+| cancel()                                          | Cancel draw                                                                                                                                                                     |      | x                            |
+| save()                                            | Save the current image                                                                                                                                                          |      | x                            |
+| clear(`keepHistory` = `false`, `force` = `false`) | You can set a `keepHistory` to `true` if you want to keep everything previously painted in history. Set `force` to `true`, to clear everything no matter if it is active or not |      | /                            |
 
 #### Example
 
