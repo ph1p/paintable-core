@@ -199,6 +199,10 @@ export class Paintable {
     return new Promise((resolve, reject) => {
       const itemFromStorage = this.deserialize(localStorage.getItem(key) || '');
 
+      if (itemFromStorage.elements.length === 0) {
+        this.removeItem(this.scope);
+      }
+
       if (itemFromStorage) {
         resolve(itemFromStorage);
       } else {
@@ -322,9 +326,6 @@ export class Paintable {
           type: 'clear',
         });
       } else {
-        if (this.registry.length === 0) {
-          this.removeItem(this.scope);
-        }
         this.registry = [];
         this.redoList = [];
       }
