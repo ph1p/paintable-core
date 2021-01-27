@@ -28,8 +28,6 @@ interface Options {
 }
 
 export class Paintable {
-  canvasIsEmpty = false;
-
   scope = 'paintable';
   color = '#000000';
   lineWidth = 5;
@@ -224,6 +222,7 @@ export class Paintable {
     if (this.isActive) {
       this.clear();
       this.load();
+      this.isEraser = false;
       this.isActive = false;
     }
   }
@@ -329,32 +328,12 @@ export class Paintable {
     }
   }
 
-  private isCanvasBlank() {
-    if (this.ctx) {
-      this.ctx.globalCompositeOperation = 'source-over';
-    }
-
-    const blank = document.createElement('canvas');
-    const blankCtx = blank.getContext('2d');
-
-    if (this.canvas) {
-      blankCtx?.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-      blank.width = this.canvas.width;
-      blank.height = this.canvas.height;
-
-      return blank.toDataURL() === this.canvas.toDataURL();
-    }
-    return true;
-  }
-
   // Get canvas registry from storage
   async load(): Promise<void> {
     try {
       const store = await this.getItem(this.scope);
       this.registry = store.elements || [];
       this.drawEntriesFromRegistry();
-      this.canvasIsEmpty = this.isCanvasBlank();
     } catch {}
   }
 
@@ -367,19 +346,13 @@ export class Paintable {
       // reset to pencil
       this.isEraser = false;
 
-      if (this.isCanvasBlank()) {
-        this.removeItem(this.scope);
-      } else {
-        this.setItem(this.scope, {
-          width: this.canvas?.width,
-          height: this.canvas?.height,
-          elements: this.registry,
-        });
-      }
+      this.setItem(this.scope, {
+        width: this.canvas?.width,
+        height: this.canvas?.height,
+        elements: this.registry,
+      });
 
       this.redoList = [];
-
-      this.canvasIsEmpty = this.isCanvasBlank();
     }
   }
 
