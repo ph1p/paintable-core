@@ -9,7 +9,27 @@ npm install @paintable/core
 
 ### How to use
 
-First of all, you need to know all about the properties and methods of the `paintable` instance.
+Import library:
+
+```javascript
+import { Paintable } from '@paintable/core';
+```
+
+or load from a CDN
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/@paintable/core"></script>
+```
+
+and create an instance with
+
+```javascript
+const paintable = new Paintable(/*
+  OPTIONS { scope: 'the-name' }
+*/);
+```
+
+First of all, you need to know all about the `properties` and `methods` of the `paintable` instance.
 
 #### Instance properities
 
