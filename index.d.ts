@@ -25,7 +25,6 @@ interface Options {
     canvas: HTMLCanvasElement;
 }
 export declare class Paintable {
-    canvasIsEmpty: boolean;
     scope: string;
     color: string;
     lineWidth: number;
@@ -80,7 +79,6 @@ export declare class Paintable {
      * @param force clear everything no matter if it is active
      */
     clear(keepHistory?: boolean, force?: boolean): void;
-    private isCanvasBlank;
     load(): Promise<void>;
     /**
      * Check first, if canvas is empty.
