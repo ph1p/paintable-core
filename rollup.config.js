@@ -4,7 +4,7 @@ import html from '@open-wc/rollup-plugin-html';
 import { terser } from 'rollup-plugin-terser';
 import serve from 'rollup-plugin-serve';
 
-const htmlTemplate = (bundle) => {
+const htmlTemplate = ({ entrypoints }) => {
   return `<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -17,7 +17,7 @@ const htmlTemplate = (bundle) => {
         background-color: #f5f5f5;
       }
     </style>
-    ${bundle.entrypoints.map((bundle) => `<script src="${bundle.importPath}"></script>`)}
+    ${entrypoints.map(({ importPath }) => `<script src="${importPath}"></script>`)}
   </head>
   <body>
     <canvas id="canvas" height="500" width="500"></canvas><br />

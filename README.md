@@ -32,6 +32,26 @@ This is the smallest example. It uses a CDN to load the library.
 </html>
 ```
 
+### Overwrite methods
+
+You can simply overwrite methods of the paintable, if you want.
+Some methods you may want to override: `moveEvent`, `startEvent` and `stopEvent`
+
+```javascript
+const paintable = new Paintable();
+
+// the old event
+const moveEvent = paintable.moveEvent;
+
+// overwrite it
+paintable.moveEvent = function () {
+  // call old event to ensure functionality
+  moveEvent.apply(this, arguments);
+
+  // your code
+};
+```
+
 ### Development
 
 ```bash

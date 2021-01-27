@@ -20,7 +20,7 @@ export class Paintable {
   lineWidth = 5;
   threshold = 0;
 
-  isMouse = true;
+  // isMouse = true;
   currentX = 0;
   currentY = 0;
 
@@ -40,9 +40,9 @@ export class Paintable {
   private redoList: RegistryEntry[] = [];
   private registry: RegistryEntry[] = [];
 
-  moveEvent: (e: any) => void;
-  startEvent: (e: any) => void;
-  endEvent: (e: any) => void;
+  moveEvent: (e: MouseEvent | TouchEvent) => void;
+  startEvent: (e: MouseEvent | TouchEvent) => void;
+  endEvent: (e: MouseEvent | TouchEvent) => void;
 
   constructor() {
     this.moveEvent = this.drawMove.bind(this);
@@ -67,11 +67,11 @@ export class Paintable {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
 
+    this.reInit();
+
     if (shouldRegisterEvents) {
       this.registerEvents();
     }
-
-    this.reInit();
   }
 
   public setName(name: string): void {
@@ -185,11 +185,6 @@ export class Paintable {
     return window.devicePixelRatio || 1;
   }
 
-  // Check if it is a touch device (https://ctrlq.org/code/19616-detect-touch-screen-javascript)
-  get isTouch(): boolean {
-    return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
-  }
-
   // Cancel current drawing and remove lines
   public cancel(): void {
     if (this.isActive) {
@@ -210,15 +205,13 @@ export class Paintable {
       this.canvas.removeEventListener('touchstart', this.startEvent);
       this.canvas.removeEventListener('touchend', this.endEvent);
 
-      if (this.isMouse) {
-        this.canvas.addEventListener('mousemove', this.moveEvent);
-        this.canvas.addEventListener('mousedown', this.startEvent);
-        this.canvas.addEventListener('mouseup', this.endEvent);
-      } else {
-        this.canvas.addEventListener('touchmove', this.moveEvent);
-        this.canvas.addEventListener('touchstart', this.startEvent);
-        this.canvas.addEventListener('touchend', this.endEvent);
-      }
+      this.canvas.addEventListener('mousemove', this.moveEvent);
+      this.canvas.addEventListener('mousedown', this.startEvent);
+      this.canvas.addEventListener('mouseup', this.endEvent);
+
+      this.canvas.addEventListener('touchmove', this.moveEvent);
+      this.canvas.addEventListener('touchstart', this.startEvent);
+      this.canvas.addEventListener('touchend', this.endEvent);
     }
   }
 
@@ -318,7 +311,7 @@ export class Paintable {
       this.registry = store.elements || [];
       this.drawEntriesFromRegistry();
       this.canvasIsEmpty = this.isCanvasBlank();
-    } catch {}
+    } catch { }
   }
 
   /**
@@ -347,7 +340,7 @@ export class Paintable {
   }
 
   // Start drawing lines
-  private drawStart(e: any) {
+  private drawStart(e: MouseEvent | TouchEvent) {
     e.preventDefault();
     this.thresholdReached = false;
 
@@ -359,8 +352,8 @@ export class Paintable {
 
       this.startedDrawing = true;
 
-      const x = this.isMouse ? e.clientX : e.targetTouches[0].clientX;
-      const y = this.isMouse ? e.clientY : e.targetTouches[0].clientY;
+      const x = e instanceof MouseEvent ? e.clientX : e.targetTouches[0].clientX;
+      const y = e instanceof MouseEvent ? e.clientY : e.targetTouches[0].clientY;
 
       if (x && y) {
         this.currentX = (x - this.canvas.getBoundingClientRect().left) * this.factor;
@@ -379,7 +372,8 @@ export class Paintable {
   }
 
   // End of drawing a line
-  private drawEnd() {
+  private drawEnd(e: MouseEvent | TouchEvent) {
+    e.preventDefault();
     if (this.isActive && this.canvas) {
       const points = this.pointCoords.filter((_, i) => i === 0 || i % 4 === 0 || i === this.pointCoords.length - 1);
 
@@ -396,6 +390,54 @@ export class Paintable {
 
       this.pointCoords = [];
       this.thresholdReached = false;
+    }
+  }
+
+
+  // Draw line on move and add current position to an array
+  private drawMove(e: MouseEvent | TouchEvent, thresholdReachedCallback: () => void = () => { }) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (this.isActive && this.startedDrawing && this.canvas) {
+      const x = e instanceof MouseEvent ? e.clientX : e.targetTouches[0].clientX;
+      const y = e instanceof MouseEvent ? e.clientY : e.targetTouches[0].clientY;
+
+      if (x && y) {
+        this.currentX = (x - this.canvas.getBoundingClientRect().left) * this.factor;
+        this.currentY = (y - this.canvas.getBoundingClientRect().top) * this.factor;
+
+        this.pointCoords.push({
+          x: this.currentX,
+          y: this.currentY,
+        });
+
+        if (this.threshold) {
+          const distanceFirstAndLastPoint = Math.sqrt(
+            Math.pow(this.pointCoords[this.pointCoords.length - 1].y - this.pointCoords[0].y, 2) +
+            Math.pow(this.pointCoords[this.pointCoords.length - 1].x - this.pointCoords[0].x, 2),
+          );
+
+          if (distanceFirstAndLastPoint > this.threshold) {
+            if (!this.thresholdReached) {
+              this.thresholdReached = true;
+              thresholdReachedCallback();
+            }
+          }
+        }
+
+        if (this.ctx) {
+          this.ctx.lineCap = 'round';
+          this.ctx.lineWidth = this.lineWidth;
+          this.ctx.strokeStyle = this.color;
+        }
+
+        this.drawLine({
+          color: this.color,
+          width: this.lineWidth,
+          points: this.pointCoords,
+        });
+      }
     }
   }
 
@@ -426,52 +468,6 @@ export class Paintable {
         this.ctx?.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
       }
       this.ctx?.stroke();
-    }
-  }
-
-  // Draw line on move and add current position to an array
-  private drawMove(e: any, thresholdReachedCallback: () => void = () => {}) {
-    e.preventDefault();
-
-    if (this.isActive && this.startedDrawing && this.canvas) {
-      const x = !this.isMouse ? e.targetTouches[0].clientX : e.clientX;
-      const y = !this.isMouse ? e.targetTouches[0].clientY : e.clientY;
-
-      if (x && y) {
-        this.currentX = (x - this.canvas.getBoundingClientRect().left) * this.factor;
-        this.currentY = (y - this.canvas.getBoundingClientRect().top) * this.factor;
-
-        this.pointCoords.push({
-          x: this.currentX,
-          y: this.currentY,
-        });
-
-        if (this.threshold) {
-          const distanceFirstAndLastPoint = Math.sqrt(
-            Math.pow(this.pointCoords[this.pointCoords.length - 1].y - this.pointCoords[0].y, 2) +
-              Math.pow(this.pointCoords[this.pointCoords.length - 1].x - this.pointCoords[0].x, 2),
-          );
-
-          if (distanceFirstAndLastPoint > this.threshold) {
-            if (!this.thresholdReached) {
-              this.thresholdReached = true;
-              thresholdReachedCallback();
-            }
-          }
-        }
-
-        if (this.ctx) {
-          this.ctx.lineCap = 'round';
-          this.ctx.lineWidth = this.lineWidth;
-          this.ctx.strokeStyle = this.color;
-        }
-
-        this.drawLine({
-          color: this.color,
-          width: this.lineWidth,
-          points: this.pointCoords,
-        });
-      }
     }
   }
 }
