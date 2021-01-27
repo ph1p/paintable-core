@@ -28,8 +28,19 @@ const htmlTemplate = ({ entrypoints }) => {
     <button id="redo">redo</button><br /><br /><br />
     <button id="save">save</button>
     <button id="cancel">cancel</button><br /><br />
-    <button id="pencil">eraser</button>
-    <input id="lineWidth" type="range" min="5" max="70" value="5" />
+    <button id="pencil">eraser</button><br /><br />
+
+    <div>
+      <input id="lineWidth" type="range" min="1" max="70" value="5" />
+      <label for="lineWidth">line-width <span id="line-width-value">5</span>px</label>
+    </div>
+    <div>
+      <input id="accuracy" type="range" min="1" max="30" value="4" />
+      <label for="accuracy">accuracy <span id="accuracy-value">4</span>px</label>
+    </div>
+
+    <br />
+
     <input id="color" type="color" value="#000000" />
     <button id="clear">clear</button>
 
@@ -39,7 +50,7 @@ const htmlTemplate = ({ entrypoints }) => {
         scope,
         canvas: document.querySelector('#canvas'),
         color: '#000000',
-        accuracy: 6
+        accuracy: 4
       });
 
       document.querySelector('#switch').addEventListener('click', () => {
@@ -49,7 +60,10 @@ const htmlTemplate = ({ entrypoints }) => {
       });
       document
         .querySelector('#lineWidth')
-        .addEventListener('input', (e) => paintable.setLineWidth(e.currentTarget.value));
+        .addEventListener('input', (e) => {
+          paintable.setLineWidth(e.currentTarget.value);
+          setTexts();
+        });
       document.querySelector('#color').addEventListener('input', (e) => paintable.setColor(e.currentTarget.value));
       document.querySelector('#undo').addEventListener('click', () => paintable.undo());
       document.querySelector('#redo').addEventListener('click', () => paintable.redo());
@@ -73,11 +87,20 @@ const htmlTemplate = ({ entrypoints }) => {
         paintable.clear(true);
         paintable.save();
       });
+      document.querySelector('#accuracy').addEventListener('input', (e) => {
+        const value = parseInt(e.currentTarget.value);
+        if(!isNaN(value) && value >= 0) {
+          paintable.setAccuracy(value);
+          setTexts();
+        }
+      });
 
 
       function setTexts() {
         document.querySelector('#activate').innerText = paintable.isActive ? 'deactivate' : 'activate';
         document.querySelector('#pencil').innerText = paintable.isEraser ? 'pencil' : 'eraser';
+        document.querySelector('#accuracy-value').innerText = paintable.accuracy;
+        document.querySelector('#line-width-value').innerText = paintable.lineWidth;
       }
     </script>
   </body>
