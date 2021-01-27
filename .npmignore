@@ -7,3 +7,6 @@ rollup.config.js
 public
 dev
 .vercel
+dist/*.html
+dist/*.map
+dist/*.d.ts
